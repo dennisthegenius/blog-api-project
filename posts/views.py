@@ -2,7 +2,7 @@ from ast import Return
 from urllib import response
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics, mixins
 from rest_framework.decorators import api_view, APIView
 from . models import Post
 from . serializer import PostSerializers
@@ -31,69 +31,32 @@ def homePage(request):
 
 # ================== classbased view =======================
 
-class ListPostCreateView(APIView):
-
-    """
-    for creating and listing the post
-    """
+class ListPostCreateView(generics.GenericAPIView, mixins.ListModelMixin, mixins.CreateModelMixin):
     serializer_class = PostSerializers
+    queryset = Post.objects.all()
 
     def get(self, request, *args, **kwargs):
-        posts = Post.objects.all()
+        return self.list(request, *args, **kwargs)
 
-        serializer = self.serializer_class(instance=posts, many=True)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
+    generics.GenericAPIView
 
-    def post(self, request, *args, **kwargs):
-        data = request.data
-        serializer = self.serializer_class(data=data)
-
-        if serializer.is_valid():
-            serializer.save()
-
-            response = {
-                "message": "post created",
-                "data": serializer.data
-            }
-            return Response(data=response, status=status.HTTP_201_CREATED)
-        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class PostRetrieveUpdateDeleteView(APIView):
+class PostRetrieveUpdateDeleteView(generics.GenericAPIView, mixins.DestroyModelMixin, mixins.UpdateModelMixin, mixins.RetrieveModelMixin):
     """
     for post retrieving and update and deleting view
     """
     serializer_class = PostSerializers
+    queryset = Post.objects.all()
 
-    def get(self, request, id):
-        post = get_object_or_404(Post, pk=id)
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
 
-        serializer = self.serializer_class(instance=post)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
+    def delete(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
 
-    def put(self, request, id):
-        post = get_object_or_404(Post, pk=id)
-
-        data = request.data
-        serializer = self.serializer_class(instance=post, data=data)
-
-        if serializer.is_valid():
-            serializer.save()
-
-            response = {
-                "message": "post updated",
-                "data": serializer.data
-            }
-
-            return Response(data=response, status=status.HTTP_201_CREATED)
-        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-    def delete(self, request, id):
-        post = get_object_or_404(Post, pk=id)
-
-        post.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    
 
 
 
