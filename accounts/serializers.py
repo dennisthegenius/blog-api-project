@@ -14,10 +14,18 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     # check if the user existing in the database
 
-    def validation(self, attrs):
-        email_exists = CustomUser.objects.filter(email=attrs['email']).exist
+    def validate(self, attrs):
+        email_exists = CustomUser.objects.filter(email=attrs['email']).exists()
 
         if email_exists:
             raise ValidationError("Email has already been used")
         return super().validate(attrs)
-     
+    
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        user = super().create(validated_data)
+
+        user.set_password(password)
+
+        user.save()
+        return user
